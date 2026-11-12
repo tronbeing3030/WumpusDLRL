@@ -30,7 +30,7 @@ from config import (
     PANEL_X, PANEL_Y, PANEL_W, PANEL_H, WIDTH, HEIGHT, FPS,
     BG, TEXT, TEXT_DIM, TEXT_FAINT, PANEL_BORDER,
     EXPLORE_COLOR, EXPLOIT_COLOR, GOAL_COLOR, GOLD_COLOR, REWARD_GOLD,
-    ACTION_NAMES,
+    ACTION_NAMES, AGENT_COLOR
 )
 from environment import WumpusEnv
 from agent import QLearningAgent
@@ -130,6 +130,7 @@ class Game:
         elif pos in self.env.pits:
             self.message = "Fell into a pit! -100"
             self.message_color = (30, 30, 30)
+            # self.next_episode()
         else:
             self.message = "Ran out of steps."
             self.message_color = TEXT_DIM
@@ -196,25 +197,24 @@ class Game:
         pygame.display.flip()
 
     def draw_header(self):
-        R.draw_text(self.screen, "WUMPUS WORLD", GRID_X, 18, 30, TEXT,
+        R.draw_text(self.screen, "WUMPUS WORLD", GRID_X, 22, 30, TEXT,
                     bold=True)
         R.draw_text(self.screen,
                     "Q-Learning agent: random exploration -> learned "
-                    "exploitation", GRID_X, 52, 16, TEXT_DIM)
+                    "exploitation", GRID_X, 58, 16, TEXT_DIM)
 
         if self.last_explore:
             badge, col = "EXPLORING", TEXT
         else:
             badge, col = "EXPLOITING", TEXT_DIM
-        R.draw_text(self.screen, badge, WIDTH - 28, 30, 20, col, bold=True,
+        R.draw_text(self.screen, badge, WIDTH - 64, 38, 20, col, bold=True,
                     anchor="right")
-        stats = f"Episode {self.episode}    epsilon {self.agent.epsilon:.3f}"
-        R.draw_text(self.screen, stats, WIDTH - 28, 54, 14, TEXT_DIM,
+        stats = f"Episode: {self.episode}    Epsilon: {self.agent.epsilon:.3f}"
+        R.draw_text(self.screen, stats, WIDTH - 64, 64, 14, TEXT_DIM,
                     anchor="right")
 
     def draw_grid(self):
-        frame = pygame.Rect(GRID_X - 6, GRID_Y - 6, GRID_W + 12, GRID_H + 12)
-        pygame.draw.rect(self.screen, PANEL_BORDER, frame, 2, border_radius=12)
+        frame = pygame.Rect(GRID_X, GRID_Y, GRID_W, GRID_H)
 
         R.draw_grid_background(self.screen,
                                self.agent.explore_grid, self.agent.exploit_grid)
@@ -228,58 +228,58 @@ class Game:
 
         if self.last_action is not None:
             cx, cy = R.cell_center(*self.env.agent_pos)
-            col = TEXT if self.last_explore else TEXT_DIM
+            col = BG if self.last_explore else TEXT
             R.draw_text(self.screen, ACTION_NAMES[self.last_action],
-                        cx, cy - CELL * 0.55, 13, col, bold=True,
+                        cx, cy, 14, col, bold=True,
                         anchor="center")
 
     def draw_panel(self):
         rect = pygame.Rect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H)
         R.draw_panel_frame(self.screen, rect)
-        x = PANEL_X + 18
+        x = PANEL_X
         w = PANEL_W - 36
 
-        y = PANEL_Y + 16
+        y = PANEL_Y - 4
         y = R.draw_section_title(self.screen, x, y,
-                                 "exploration <-> exploitation", w)
+                                 "exploration - exploitation", w)
         gauge = pygame.Rect(x, y, w, 78)
         R.draw_epsilon_gauge(self.screen, gauge, self.agent.epsilon)
 
-        y = gauge.bottom + 14
+        y = gauge.bottom - 2
         y = R.draw_section_title(self.screen, x, y, "action selection ratio",
                                  w)
         R.draw_donut(self.screen, (x + 52, y + 48), 44,
                      self.agent.explore_count, self.agent.exploit_count)
-        ex, ey = x + 116, y + 22
+        ex, ey = x + 116, y + 48
         R.draw_text(self.screen, "random / explore", ex, ey, 14, EXPLORE_COLOR,
                     bold=True)
         R.draw_text(self.screen, str(self.agent.explore_count), x + w, ey, 16,
                     TEXT, bold=True, anchor="right")
-        R.draw_text(self.screen, "greedy / exploit", ex, ey + 24, 14,
+        R.draw_text(self.screen, "greedy / exploit", ex, ey + 20, 14,
                     TEXT_DIM, bold=True)
-        R.draw_text(self.screen, str(self.agent.exploit_count), x + w, ey + 24,
+        R.draw_text(self.screen, str(self.agent.exploit_count), x + w, ey + 20,
                     16, TEXT, bold=True, anchor="right")
 
-        y = y + 104
+        y = y + 102
         y = R.draw_section_title(self.screen, x, y, "learned policy (greedy)",
                                  w)
-        policy_rect = pygame.Rect(x, y, w, 120)
+        policy_rect = pygame.Rect(x, y, w, 240)
         R.draw_policy_map(self.screen, policy_rect, self.agent)
 
-        y = policy_rect.bottom + 14
-        y = R.draw_section_title(self.screen, x, y, "episode reward history",
-                                 w)
-        chart = pygame.Rect(x, y, w, PANEL_Y + PANEL_H - 26 - y)
+        y = policy_rect.bottom + 25
+        y = R.draw_section_title(self.screen, x - 506, y, "episode reward history",
+                                 w + 512)
+        chart = pygame.Rect(x - 506, y + 50, w + 512, PANEL_Y + PANEL_H - 83 - y)
         R.draw_reward_chart(self.screen, chart, self.history)
 
     def draw_footer(self):
-        R.draw_legend(self.screen, GRID_X, HEIGHT - 26)
+        R.draw_legend(self.screen, GRID_X + 278, HEIGHT - 136)
         if self.message:
-            R.draw_text(self.screen, self.message, WIDTH - 28, HEIGHT - 26, 15,
-                        self.message_color, bold=True, anchor="right")
-        hint = ("SPACE pause   R reset   N new dungeon   F fast   "
-                "1/2/3 speed   ESC quit")
-        R.draw_text(self.screen, hint, GRID_X, HEIGHT - 50, 13, TEXT_FAINT)
+            R.draw_text(self.screen, self.message, WIDTH - 897, HEIGHT - 147, 15,
+                        self.message_color, bold=True, anchor="left")
+        hint = ("SPACE: pause      R: reset      N: new dungeon     F: fast      "
+                "1 | 2 | 3 speed       ESC: quit")
+        R.draw_text(self.screen, hint, GRID_X - 2, HEIGHT - 126, 13, TEXT_FAINT)
 
 
 def main():

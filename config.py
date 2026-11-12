@@ -19,7 +19,7 @@ CELL = 80                       # pixel size of one grid cell
 # ---------------------------------------------------------------------------
 BG = (250, 250, 250)            # near-white page background
 PANEL_BG = (255, 255, 255)      # white panels
-PANEL_BORDER = (24, 24, 24)     # near-black borders
+PANEL_BORDER = (2, 2, 2)     # near-black borders
 CELL_BG = (255, 255, 255)       # white floor
 CELL_BG_ALT = (240, 240, 240)   # light-grey checker floor (black & white)
 GRID_LINE = (205, 205, 205)     # cell border
@@ -29,13 +29,10 @@ TEXT_DIM = (95, 95, 95)         # grey secondary text
 TEXT_FAINT = (150, 150, 150)    # grey faint text
 
 # Entities -> each a DIFFERENT simple shape + colour
-AGENT_COLOR = (37, 99, 235)     # blue   -> SQUARE
-GOAL_COLOR = (22, 163, 74)      # green  -> SQUARE (the exit)
+AGENT_COLOR = (26, 111, 209)     # blue   -> SQUARE
+GOAL_COLOR = (37, 177, 112)      # green  -> SQUARE (the exit)
 GOLD_COLOR = (246, 150, 40)     # orange -> CIRCLE (treasure to collect)
 PIT_COLOR = (30, 30, 30)        # black  -> CIRCLE (hazard)
-
-# Percepts (Wumpus World flavour)
-BREEZE_COLOR = (70, 130, 220)   # blue fill near pits
 
 # Exploration vs exploitation accents
 EXPLORE_COLOR = (22, 22, 22)    # black       = random exploration
@@ -44,7 +41,7 @@ HEAT_COLOR = (96, 145, 235)     # (kept for compatibility)
 
 # chart line (must read clearly on white)
 CHART_LINE = (40, 40, 40)
-PATH_COLOR = (60, 60, 60)       # path-arrow colour
+PATH_COLOR = (250, 250, 250)       # path-arrow colour
 
 # ---------------------------------------------------------------------------
 # Reinforcement-learning hyper-parameters
@@ -86,7 +83,7 @@ GRID_H = ROWS * CELL
 PANEL_X = GRID_X + GRID_W + 24
 PANEL_W = 364
 PANEL_Y = GRID_Y
-PANEL_H = GRID_H
+PANEL_H = 600
 
 WIDTH = PANEL_X + PANEL_W + 28
 HEIGHT = 720

@@ -25,7 +25,6 @@ from config import (
     BG, PANEL_BG, PANEL_BORDER, CELL_BG, CELL_BG_ALT, GRID_LINE,
     TEXT, TEXT_DIM, TEXT_FAINT,
     AGENT_COLOR, GOAL_COLOR, GOLD_COLOR, PIT_COLOR,
-    BREEZE_COLOR,
     EXPLORE_COLOR, EXPLOIT_COLOR, HEAT_COLOR, CHART_LINE, PATH_COLOR,
     ACTION_ARROWS, FONT_STACK,
 )
@@ -92,12 +91,12 @@ def draw_grid_background(surface, explore_grid, exploit_grid):
     for r in range(ROWS):
         for c in range(COLS):
             rect = cell_rect(r, c)
-            color = CELL_BG if (r + c) % 2 == 0 else CELL_BG_ALT
-            pygame.draw.rect(surface, color, rect, border_radius=8)
-            pygame.draw.rect(surface, GRID_LINE, rect, 1, border_radius=8)
+            color = CELL_BG
+            pygame.draw.rect(surface, TEXT, rect, border_radius=3)
+            pygame.draw.rect(surface, color, rect, 1, border_radius=3)
 
             if int(explore_grid[r, c]) > 0:
-                _pip(surface, rect, "tl", EXPLORE_COLOR)
+                _pip(surface, rect, "bl", BG)
             if int(exploit_grid[r, c]) > 0:
                 _pip(surface, rect, "br", EXPLOIT_COLOR)
 
@@ -116,10 +115,11 @@ def draw_trail(surface, trail):
 def _pip(surface, rect, corner, color, rad=4):
     m = 6
     if corner == "tl":
-        pos = (rect.left + m, rect.top + m)
+        cx, cy = rect.left + m, rect.top + m
     else:
-        pos = (rect.right - m, rect.bottom - m)
-    pygame.draw.circle(surface, color, pos, rad)
+        cx, cy = rect.right - m, rect.bottom - m
+    pip_rect = pygame.Rect(int(cx - rad), int(cy - rad), int(rad * 2), int(rad * 2))
+    pygame.draw.rect(surface, color, pip_rect, border_radius=1)
 
 
 def draw_percepts(surface, env):
@@ -128,35 +128,52 @@ def draw_percepts(surface, env):
         for c in range(COLS):
             rect = cell_rect(r, c)
             if env.breeze((r, c)):
-                _halo(surface, rect, BREEZE_COLOR)
+                _halo(surface, rect, BG)
 
 
 def _halo(surface, rect, color):
     overlay = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
-    pygame.draw.rect(overlay, color + (46,), overlay.get_rect(),
-                     border_radius=8)
+    pygame.draw.rect(overlay, color + (145, ), overlay.get_rect(), border_radius=4)
     surface.blit(overlay, rect.topleft)
 
 
 def draw_goal(surface, env):
     cx, cy = cell_center(*env.goal)
-    _square(surface, GOAL_COLOR, (cx, cy), CELL * 0.30)
+    _square(surface, GOAL_COLOR, (cx, cy), CELL * 0.5)
 
 
 def draw_gold(surface, env):
     cx, cy = cell_center(*env.gold)
     if env.has_gold:
         # already collected -> faint hollow outline
-        pygame.draw.circle(surface, GOLD_COLOR, (cx, cy), CELL * 0.20, 3)
+        size = CELL * 0.25
+        rect = pygame.Rect(int(cx - size), int(cy - size), int(size * 2), int(size * 2))
+        pygame.draw.rect(surface, GOLD_COLOR, rect, 3, border_radius=2)
     else:
-        pygame.draw.circle(surface, GOLD_COLOR, (cx, cy), CELL * 0.24)
-        pygame.draw.circle(surface, BG, (cx, cy), CELL * 0.10)
+        # outer gold square
+        outer_size = CELL * 0.3
+        outer_rect = pygame.Rect(int(cx - outer_size) + 1, int(cy - outer_size) + 1, int(outer_size * 2), int(outer_size * 2))
+        pygame.draw.rect(surface, GOLD_COLOR, outer_rect, border_radius=2)
+
+        inner_size = CELL * 0.125
+        inner_rect = pygame.Rect(int(cx - inner_size) + 1, int(cy - inner_size) + 1, int(inner_size * 2), int(inner_size * 2))
+        pygame.draw.rect(surface, PANEL_BORDER, inner_rect, border_radius=2)
+
+    # cx, cy = cell_center(*env.gold)
+    # if env.has_gold:
+    #     # already collected -> faint hollow outline
+    #     pygame.draw.circle(surface, GOLD_COLOR, (cx, cy), CELL * 0.20, 3)
+    # else:
+    #     pygame.draw.circle(surface, GOLD_COLOR, (cx, cy), CELL * 0.24)
+    #     pygame.draw.circle(surface, BG, (cx, cy), CELL * 0.10)
 
 
 def draw_pits(surface, env):
     for (r, c) in env.pits:
         cx, cy = cell_center(r, c)
-        pygame.draw.circle(surface, PIT_COLOR, (cx, cy), CELL * 0.26)
+        size = CELL * .5
+        rect = pygame.Rect(int(cx - size), int(cy - size), int(size * 2), int(size * 2))
+        pygame.draw.rect(surface, BG, rect, border_radius=2)
 
 
 def draw_agent(surface, pos, has_gold=False, pulse=0.0):
@@ -168,13 +185,13 @@ def draw_agent(surface, pos, has_gold=False, pulse=0.0):
     glow = pygame.Surface((CELL, CELL), pygame.SRCALPHA)
     pygame.draw.rect(glow, AGENT_COLOR + (55,),
                      pygame.Rect(CELL // 2 - half - 4, CELL // 2 - half - 4,
-                                 (half + 4) * 2, (half + 4) * 2), border_radius=8)
+                                 (half + 4) * 2, (half + 4) * 2), border_radius=4)
     surface.blit(glow, (cx - CELL // 2, cy - CELL // 2))
-    pygame.draw.rect(surface, AGENT_COLOR, rect, border_radius=5)
-    pygame.draw.rect(surface, BG, rect, 2, border_radius=5)
+    pygame.draw.rect(surface, AGENT_COLOR, rect, border_radius=2)
     # carried-gold indicator (small orange dot)
     if has_gold:
-        pygame.draw.circle(surface, GOLD_COLOR, (cx, cy), 5)
+        rect = pygame.Rect(int(cx + half - 15), int(cy + half - 15), 15, 15)
+        pygame.draw.rect(surface, GOLD_COLOR, rect, border_radius=2)
 
 
 # ---------------------------------------------------------------------------
@@ -214,8 +231,7 @@ def _square(surface, color, center, size):
 # Side panel: exploration / exploitation visualisations
 # ---------------------------------------------------------------------------
 def draw_panel_frame(surface, rect):
-    pygame.draw.rect(surface, PANEL_BG, rect, border_radius=14)
-    pygame.draw.rect(surface, PANEL_BORDER, rect, 2, border_radius=14)
+    pygame.draw.rect(surface, PANEL_BG, rect, border_radius=4)
 
 
 def draw_section_title(surface, x, y, txt, w):
@@ -226,19 +242,19 @@ def draw_section_title(surface, x, y, txt, w):
 
 def draw_epsilon_gauge(surface, rect, epsilon):
     """Horizontal bar: orange=explore, emerald=exploit; marker at epsilon."""
-    pad = 10
-    bar = pygame.Rect(rect.x + pad, rect.y + 40, rect.w - 2 * pad, 20)
-    pygame.draw.rect(surface, EXPLOIT_COLOR, bar, border_radius=10)
+    pad = 0
+    bar = pygame.Rect(rect.x + pad, rect.y + 18, rect.w - 2 * pad, 32)
+    pygame.draw.rect(surface, EXPLOIT_COLOR, bar, border_radius=2)
     explore_w = int(bar.w * epsilon)
     if explore_w > 0:
         exp = pygame.Rect(bar.left, bar.top, explore_w, bar.h)
-        pygame.draw.rect(surface, EXPLORE_COLOR, exp, border_radius=10)
+        pygame.draw.rect(surface, EXPLORE_COLOR, exp, border_radius=2)
     mx = bar.left + explore_w
     pygame.draw.line(surface, TEXT, (mx, bar.top - 4), (mx, bar.bottom + 4), 3)
-    draw_text(surface, "explore", bar.left, bar.top - 18, 13, TEXT)
-    draw_text(surface, "exploit", bar.right, bar.top - 18, 13, TEXT_DIM,
+    draw_text(surface, "explore", bar.left, bar.top - 22, 13, TEXT)
+    draw_text(surface, "exploit", bar.right, bar.top - 22, 13, TEXT_DIM,
               anchor="right")
-    draw_text(surface, f"epsilon = {epsilon:.3f}", bar.left, bar.bottom + 6,
+    draw_text(surface, f"epsilon = {epsilon:.3f}", bar.left, bar.bottom,
               15, TEXT, bold=True)
 
 
@@ -261,9 +277,9 @@ def draw_donut(surface, center, radius, explore, exploit, thickness=22):
     end = start + e_frac * 2 * math.pi
     if e_frac > 0:
         _arc(surface, EXPLORE_COLOR, box, start, end, thickness)
-    draw_text(surface, f"{int(e_frac * 100)}%", cx, cy - 8, 22, TEXT, bold=True,
-              anchor="center")
-    draw_text(surface, "explore", cx, cy + 14, 12, TEXT_DIM, anchor="center")
+    draw_text(surface, f"{int(e_frac * 100)}%", cx + 60, cy - 42, 36, TEXT, bold=True,
+              anchor="left")
+    # draw_text(surface, "explore", cx + 82, cy - 6, 12, TEXT_DIM, anchor="center")
 
 
 def _arc(surface, color, box, start, end, thickness):
@@ -272,9 +288,9 @@ def _arc(surface, color, box, start, end, thickness):
 
 def draw_policy_map(surface, rect, agent):
     """Small grid: arrows = greedy action, cell tint = Q-value magnitude."""
-    gap = 6
-    inner = pygame.Rect(rect.x + gap, rect.y + 26,
-                        rect.w - 2 * gap, rect.h - 26 - gap)
+    gap = 4
+    inner = pygame.Rect(rect.x + gap - 4, rect.y,
+                        rect.w + 1 * gap, rect.h + 24 - gap)
     cw = inner.w / COLS
     ch = inner.h / ROWS
     qmax = max(1e-6, float(agent.q.max()), float(-agent.q.min()))
@@ -290,9 +306,11 @@ def draw_policy_map(surface, rect, agent):
             pygame.draw.rect(surface, base, cell, border_radius=4)
             arrow_col = BG if val < 0 else TEXT
             dx, dy = ACTION_ARROWS[best]
-            ccx = cell.centerx + dx * cw * 0.22
-            ccy = cell.centery + dy * ch * 0.22
-            _arrow(surface, arrow_col, cell.center, (ccx, ccy))
+            half_x = dx * cw * 0.15
+            half_y = dy * ch * 0.15
+            start = (cell.centerx - half_x, cell.centery - half_y)
+            end = (cell.centerx + half_x, cell.centery + half_y)
+            _arrow(surface, arrow_col, start, end, size=4, width=2)
 
 
 def _arrow(surface, color, start, end, size=6, width=2):
@@ -307,7 +325,7 @@ def _arrow(surface, color, start, end, size=6, width=2):
 def draw_reward_chart(surface, rect, history):
     """Episode reward history as a filled line chart."""
     if not history:
-        draw_text(surface, "no episodes yet", rect.x + 8, rect.centery, 14,
+        draw_text(surface, "no episodes yet", rect.x, rect.centery, 14,
                   TEXT_FAINT)
         return
     pad_l, pad_r, pad_t, pad_b = 6, 6, 8, 8
@@ -323,26 +341,26 @@ def draw_reward_chart(surface, rect, history):
         y = plot.bottom - ((v - lo) / span) * plot.h
         pts.append((x, y))
     zy = plot.bottom - ((0 - lo) / span) * plot.h
-    pygame.draw.line(surface, PANEL_BORDER, (plot.x, zy), (plot.right, zy), 1)
+    pygame.draw.line(surface, EXPLOIT_COLOR, (plot.x, zy), (plot.right, zy), 1)
     if len(pts) >= 2:
         pygame.draw.lines(surface, CHART_LINE, False, pts, 2)
     if pts:
-        pygame.draw.circle(surface, GOAL_COLOR,
-                           (int(pts[-1][0]), int(pts[-1][1])), 3)
+        pygame.draw.circle(surface, EXPLOIT_COLOR,
+                           (int(pts[-1][0]), int(pts[-1][1])), 2)
 
 
 def draw_legend(surface, x, y):
     items = [
         ("square", AGENT_COLOR, "Agent"),
-        ("circle", GOLD_COLOR, "Gold"),
+        ("square", GOLD_COLOR, "Gold"),
         ("square", GOAL_COLOR, "Goal"),
-        ("circle", PIT_COLOR, "Pit"),
+        ("square", PIT_COLOR, "Pit"),
     ]
     cx = x
     for shape, color, label in items:
         _legend_swatch(surface, shape, color, (cx, y))
-        r = draw_text(surface, label, cx + 16, y - 7, 13, TEXT_DIM)
-        cx += 16 + r.width + 22
+        r = draw_text(surface, label, cx + 8, y - 11, 13, TEXT_DIM)
+        cx += 16 + r.width + 16
 
 
 def _legend_swatch(surface, shape, color, center):
